@@ -9,9 +9,9 @@ import { getStats, getEmployers, getTestimonials, getVideoTestimonials, getSucce
 import { AlumniReviewsList } from '@/components/alumni-reviews-list'
 
 export const metadata: Metadata = {
-  title: 'Success Stories — Uptrail',
+  title: 'Career Change Success Stories | Uptrail Graduates',
   description:
-    'Reviews, testimonials, career outcomes and alumni stories from Uptrail graduates. Rated 4.9/5 across 1,500+ learners.',
+    'Real Uptrail graduates on how they switched careers, built portfolios and landed roles in data, business analysis, marketing and product.',
 }
 
 export const revalidate = 0

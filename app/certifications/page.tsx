@@ -8,9 +8,9 @@ import { FinalCta } from '@/components/final-cta'
 import { getProgrammes } from '@/lib/store/store'
 
 export const metadata: Metadata = {
-  title: 'Certifications — Uptrail',
+  title: 'Certification Programmes with Live Mentoring | Uptrail',
   description:
-    'Earn globally recognised, industry-standard certifications with live mentoring, hands-on projects and full exam preparation.',
+    'Earn globally recognised certifications with weekly live mentoring, hands-on projects and full exam prep — built for beginners and career switchers.',
 }
 
 const highlights = [

@@ -1,0 +1,34 @@
+# robots.txt for https://uptrail.co.uk
+# NOTE FOR DEVELOPER: deploy this on the PRODUCTION domain only.
+# The staging site (uptrail.netlify.app) should instead return
+# "X-Robots-Tag: noindex" on all responses so it never gets indexed.
+
+User-agent: *
+Allow: /
+
+# Keep thin/transactional pages out of the index (still crawlable if you prefer — 
+# remove these lines if you'd rather rely on meta noindex per page)
+Disallow: /api/
+Disallow: /admin/
+Disallow: /payment-success
+Disallow: /application-received
+Disallow: /*?ref=
+Disallow: /*?utm_
+
+# AI assistants and answer engines — explicitly allowed
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://uptrail.co.uk/sitemap.xml

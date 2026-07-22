@@ -7,9 +7,9 @@ import { ZohoBookingWidget } from '@/components/zoho-booking-widget'
 import { getProgrammes, getStats, getSettings } from '@/lib/store/store'
 
 export const metadata: Metadata = {
-  title: 'Book a Career Consultation | Uptrail',
+  title: 'Free Career Consultation — Data, Tech & Digital | Uptrail',
   description:
-    'Book a free, no-pressure career consultation. A Uptrail adviser will help you choose the right programme for your goals.',
+    'Not sure which path fits? Book a free consultation with our careers team for personalised guidance on breaking into data, business or digital roles.',
 }
 
 const steps = [

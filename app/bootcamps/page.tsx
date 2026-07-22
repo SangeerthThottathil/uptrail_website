@@ -8,9 +8,9 @@ import { FinalCta } from '@/components/final-cta'
 import { getProgrammes } from '@/lib/store/store'
 
 export const metadata: Metadata = {
-  title: 'Bootcamps — Uptrail',
+  title: 'Data, Business & Marketing Bootcamps UK | Uptrail',
   description:
-    'Short, focused, mentor-led bootcamps that build a specific, in-demand skill set in weeks — ideal for upskilling fast.',
+    'Live online bootcamps in data analytics, business analysis and digital marketing. 3–6 weeks, expert mentors, real projects and 1:1 career coaching. Beginner friendly.',
 }
 
 const highlights = [

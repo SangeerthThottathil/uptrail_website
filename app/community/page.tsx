@@ -13,9 +13,9 @@ import { FinalCta } from '@/components/final-cta'
 import { getStats } from '@/lib/store/store'
 
 export const metadata: Metadata = {
-  title: 'Community | Uptrail',
+  title: 'Uptrail Community — 1,500+ Learners & Alumni',
   description:
-    'Learn alongside a global community of career switchers, mentors and alumni who support each other long after graduation.',
+    'Join learners and alumni across 55+ countries. Study groups, live Q&As, CV reviews and a live feed of roles and referrals — you never job-hunt alone.',
 }
 
 const pillars = [

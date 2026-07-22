@@ -6,7 +6,7 @@ import { sanitizeHtml } from '@/lib/sanitize'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy | Uptrail',
-  description: 'This privacy notice tells you what to expect us to do with your personal information, including what information we collect, use, and why.',
+  description: 'How Uptrail collects, uses and protects your personal data.',
 }
 
 export default async function PrivacyPolicyPage() {

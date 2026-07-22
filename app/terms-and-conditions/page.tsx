@@ -6,7 +6,7 @@ import { sanitizeHtml } from '@/lib/sanitize'
 
 export const metadata: Metadata = {
   title: 'Terms & Conditions | Uptrail',
-  description: 'These Terms and Conditions govern your purchase and use of any programme, bootcamp, short programme, career programme, module, service, or product offered by Uptrail Ltd.',
+  description: "Uptrail's terms and conditions, including enrolment and refund policy.",
 }
 
 export default async function TermsAndConditionsPage() {

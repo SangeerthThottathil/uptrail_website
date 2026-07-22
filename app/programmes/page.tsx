@@ -8,9 +8,9 @@ import { FinalCta } from '@/components/final-cta'
 import { getProgrammes } from '@/lib/store/store'
 
 export const metadata: Metadata = {
-  title: 'Career Programmes — Uptrail',
+  title: 'Career Programmes | Part-Time, Live & Mentor-Led | Uptrail',
   description:
-    'In-depth, mentor-led career programmes that take you from beginner to job-ready, complete with a portfolio and dedicated career coaching.',
+    'Part-time career programmes for graduates and career switchers. Learn Excel, SQL, Python, Power BI and AI live with mentors — finish with a job-ready portfolio.',
 }
 
 const highlights = [

@@ -87,10 +87,6 @@ export default async function ApplyPage({
                 ))}
               </ul>
             </div>
-
-            <div className="mt-6 p-4 rounded-xl bg-accent/5 border border-accent/15 text-accent text-sm">
-              <strong>Admission note:</strong> Reviewing applications takes up to one working day. Our admissions team will email you to schedule a quick confirmation call.
-            </div>
           </div>
 
           {/* Right Column: Application Form */}

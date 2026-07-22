@@ -27,9 +27,9 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Uptrail — Live mentor-led career programmes',
+  title: 'Career Programmes for Graduates & Career Switchers | Uptrail',
   description:
-    'Uptrail runs live, mentor-led career programmes that help graduates and career switchers break into data, business and digital roles. 1500+ learners trained across 55+ countries.',
+    'Live, mentor-led career programmes helping graduates and career switchers land data, business and digital roles. 1,500+ learners in 55+ countries. Free consultation.',
   generator: 'v0.app',
   icons: {
     icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],

@@ -46,6 +46,8 @@ export const programmes: Programme[] = [
   {
     slug: 'ai-data-analyst-career-programme',
     title: 'AI Data Analyst Career Programme',
+    seoTitle: 'AI Data Analyst Career Programme — 6 Months | Uptrail',
+    metaDescription: 'Become a job-ready data analyst in 6 months, part-time. Live mentoring in Excel, SQL, Python, Power BI and Azure AI, plus CV, interview and job-search coaching.',
     category: 'Data',
     track: 'career',
     duration: '6 months',
@@ -172,6 +174,8 @@ export const programmes: Programme[] = [
   {
     slug: 'comptia-data-plus',
     title: 'CompTIA Data+ Certification Programme',
+    seoTitle: 'CompTIA Data+ Certification Programme | Uptrail',
+    metaDescription: 'Pass CompTIA Data+ in 3 months with weekly live mentoring, hands-on data projects and complete exam preparation. Globally recognised — beginner friendly.',
     category: 'Data',
     track: 'certification',
     duration: '3 months',
@@ -221,6 +225,8 @@ export const programmes: Programme[] = [
   {
     slug: 'digital-marketing-bootcamp',
     title: 'Digital Marketing Bootcamp',
+    seoTitle: 'Digital Marketing Bootcamp — 5 Weeks, Live | Uptrail',
+    metaDescription: 'Learn SEO, PPC, analytics and AI marketing tools in a 5-week live bootcamp with expert mentors and 1:1 career coaching. Beginner friendly — join the next cohort.',
     category: 'Digital',
     track: 'bootcamp',
     duration: '5 weeks',
@@ -264,6 +270,8 @@ export const programmes: Programme[] = [
   {
     slug: 'ai-data-analyst-bootcamp',
     title: 'AI Data Analyst Bootcamp',
+    seoTitle: 'AI Data Analyst Bootcamp — 6 Weeks, Live | Uptrail',
+    metaDescription: 'Get job-ready in 6 weeks with Python, SQL, BI and AI tools. Build end-to-end analytics projects on real datasets, guided live by expert mentors. Beginner friendly.',
     category: 'Data',
     track: 'bootcamp',
     duration: '6 weeks',
@@ -307,6 +315,8 @@ export const programmes: Programme[] = [
   {
     slug: 'business-analysis-bootcamp',
     title: 'Business Analysis Bootcamp',
+    seoTitle: 'Business Analysis Bootcamp — 3 Weeks, Live | Uptrail',
+    metaDescription: 'Learn requirements, process mapping, stakeholder management and Agile in an intensive 3-week live bootcamp — built for graduates and career switchers moving into tech.',
     category: 'Business',
     track: 'bootcamp',
     duration: '3 weeks',
@@ -479,12 +489,16 @@ export type Post = {
   image: string
   bodyContent?: string
   isFeatured?: boolean
+  seoTitle?: string
+  metaDescription?: string
 }
 
 export const posts: Post[] = [
   {
     slug: 'breaking-into-data-without-a-degree',
     title: 'How to break into data analytics without a degree',
+    seoTitle: 'How to Become a Data Analyst Without a Degree | Uptrail',
+    metaDescription: 'A practical roadmap to your first analytics role without a university degree — what to learn, what to skip, and how to prove your skills to employers.',
     excerpt:
       'A practical, no-nonsense roadmap for landing your first analytics role — what to learn, what to skip, and how to prove it.',
     category: 'Career advice',
@@ -497,6 +511,8 @@ export const posts: Post[] = [
   {
     slug: 'portfolio-projects-that-get-interviews',
     title: 'The five portfolio projects that actually get you interviews',
+    seoTitle: '5 Data Portfolio Projects That Get Interviews | Uptrail',
+    metaDescription: 'Recruiters skim hundreds of portfolios. These five project types make them stop and book a call — with examples you can start building this week.',
     excerpt:
       'Recruiters skim hundreds of portfolios. These are the projects that make them stop and book a call.',
     category: 'Portfolios',
@@ -509,6 +525,8 @@ export const posts: Post[] = [
   {
     slug: 'switching-careers-in-your-thirties',
     title: 'Switching careers in your thirties: what nobody tells you',
+    seoTitle: 'Career Change at 30: What Nobody Tells You | Uptrail',
+    metaDescription: 'The real challenges of switching careers in your thirties, the advantages you already have, and a practical plan for making the move into tech work.',
     excerpt:
       'Changing direction later feels risky. Here is how our most successful learners reframed it as their biggest advantage.',
     category: 'Career advice',

@@ -6,9 +6,9 @@ import { ContactForm } from '@/components/contact-form'
 import { getSettings } from '@/lib/store/store'
 
 export const metadata: Metadata = {
-  title: 'Contact | Uptrail',
+  title: 'Contact Uptrail | Programmes, Training & Hiring',
   description:
-    'Book a free career consultation or ask us anything about our programmes.',
+    'Questions about programmes, corporate training or hiring our graduates? Contact the Uptrail team — we usually respond within one working day.',
 }
 
 export const dynamic = 'force-dynamic'

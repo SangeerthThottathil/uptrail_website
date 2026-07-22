@@ -6,9 +6,9 @@ import { BusinessForm } from '@/components/business-form'
 import { getEmployers, getStats } from '@/lib/store/store'
 
 export const metadata: Metadata = {
-  title: 'Hire Talent | Uptrail',
+  title: 'Hire Junior Data & Digital Talent — Pre-Vetted | Uptrail',
   description:
-    'Hire job-ready data, product and digital talent trained on real projects. Tell us your roles and we will match vetted candidates.',
+    'Hire mentor-vetted, project-proven early-career talent in data, business and digital roles. Shortlists matched to your stack in days — no upfront cost.',
 }
 
 const steps = [

@@ -113,10 +113,13 @@ export async function submitApplication(input: {
     if (selectedOption && selectedOption.redirectUrl && selectedOption.redirectUrl.trim()) {
       redirectUrl = validateRedirectUrl(selectedOption.redirectUrl)
     } else {
-      // Fall back to global redirect configuration
-      const settings = await store.getSettings()
-      if (settings.general.applicationRedirectEnabled && settings.general.applicationRedirectUrl) {
-        redirectUrl = validateRedirectUrl(settings.general.applicationRedirectUrl)
+      try {
+        const settings = await store.getSettings()
+        if (settings?.general?.applicationRedirectEnabled && settings?.general?.applicationRedirectUrl) {
+          redirectUrl = validateRedirectUrl(settings.general.applicationRedirectUrl)
+        }
+      } catch (err) {
+        console.warn('Could not fetch settings for redirect URL fallback:', err)
       }
     }
 

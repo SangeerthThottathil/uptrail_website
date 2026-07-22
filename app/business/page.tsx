@@ -21,9 +21,9 @@ import { BusinessForm } from '@/components/business-form'
 import { getSettings } from '@/lib/store/store'
 
 export const metadata: Metadata = {
-  title: 'For Business — Workforce Training | Uptrail',
+  title: 'Corporate Data & AI Training for Teams | Uptrail',
   description:
-    'Upskill your workforce with live, expert-led training in data, AI, business and digital technologies. Custom programmes delivered online, onsite or hybrid.',
+    'Upskill your team with live, expert-led training in data, AI and digital skills. Hands-on workshops and programmes built around your tools and your own data.',
 }
 
 const audiences = [

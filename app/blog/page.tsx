@@ -7,9 +7,9 @@ import { PageHeader } from '@/components/page-header'
 import { getPosts } from '@/lib/store/store'
 
 export const metadata: Metadata = {
-  title: 'Blog | Uptrail',
+  title: 'Career Change Advice & Guides | Uptrail Blog',
   description:
-    'Career advice, portfolio tips and industry insight to help you land your next role.',
+    'Practical career-change advice from Uptrail mentors — breaking into data, building portfolios that get interviews, and landing offers without a degree.',
 }
 
 export default async function BlogPage() {

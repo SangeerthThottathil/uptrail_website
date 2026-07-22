@@ -22,7 +22,10 @@ export async function generateMetadata({
   const { slug } = await params
   const post = await getPost(slug)
   if (!post) return { title: 'Article | Uptrail' }
-  return { title: `${post.title} | Uptrail`, description: post.excerpt }
+  return {
+    title: post.seoTitle || `${post.title} | Uptrail`,
+    description: post.metaDescription || post.excerpt,
+  }
 }
 
 export default async function BlogPostPage({

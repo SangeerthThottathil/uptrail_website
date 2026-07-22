@@ -1612,8 +1612,9 @@ export async function addApplication(
 
   const { error } = await serviceClient.from('programme_applications').insert(insertObj)
   if (error && (error.code === '42703' || error.code === 'PGRST204' || error.message?.includes('payment_plan'))) {
-    delete insertObj.payment_plan
-    const { error: retryError } = await serviceClient.from('programme_applications').insert(insertObj)
+    const fallbackObj = { ...insertObj, id: id('app') }
+    delete fallbackObj.payment_plan
+    const { error: retryError } = await serviceClient.from('programme_applications').insert(fallbackObj)
     if (retryError) {
       console.error('Database error in addApplication retry:', retryError)
       throw new Error(`Failed to save application to database: ${retryError.message}`)

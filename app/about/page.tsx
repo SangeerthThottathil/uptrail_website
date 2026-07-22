@@ -6,9 +6,9 @@ import { FinalCta } from '@/components/final-cta'
 import { getStats } from '@/lib/store/store'
 
 export const metadata: Metadata = {
-  title: 'About | Uptrail',
+  title: 'About Uptrail | Live Mentor-Led Career Programmes',
   description:
-    'Uptrail is on a mission to make career-changing education accessible, practical and genuinely human.',
+    'Uptrail helps graduates and career switchers break into data, business and digital roles through live, mentor-led programmes. UK-registered, globally taught.',
 }
 
 const values = [
