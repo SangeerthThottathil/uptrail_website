@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, GraduationCap, Award, Rocket, Quote, Newspaper, Inbox } from 'lucide-react'
 import {
   getProgrammes,
   getApplications,
@@ -15,13 +15,13 @@ import { seedDbAction } from '@/app/admin/actions/content'
 
 export default async function AdminDashboard() {
   const [allProgrammes, applications, submissions, testimonials, posts, isDatabaseEmpty, applicationSummary] = await Promise.all([
-    getProgrammes(),
-    getApplications(),
-    getContactSubmissions(),
-    getTestimonials(),
-    getPosts(),
-    checkDatabaseEmpty(),
-    getApplicationSummary(),
+    getProgrammes().catch(() => []),
+    getApplications().catch(() => []),
+    getContactSubmissions().catch(() => []),
+    getTestimonials().catch(() => []),
+    getPosts().catch(() => []),
+    checkDatabaseEmpty().catch(() => true),
+    getApplicationSummary().catch(() => []),
   ])
 
   const career = allProgrammes.filter((p) => p.track === 'career')
@@ -32,12 +32,12 @@ export default async function AdminDashboard() {
   const unreadSubmissions = submissions.filter((m) => !m.read).length
 
   const stats = [
-    { label: 'Career programmes', value: career.length, href: '/admin/programmes/career' },
-    { label: 'Certifications', value: certification.length, href: '/admin/programmes/certifications' },
-    { label: 'Bootcamps', value: bootcamp.length, href: '/admin/programmes/bootcamps' },
-    { label: 'Testimonials', value: testimonials.length, href: '/admin/testimonials' },
-    { label: 'Blog posts', value: posts.length, href: '/admin/blog' },
-    { label: 'New applications', value: newApplications, href: '/admin/applications/career' },
+    { label: 'Career programmes', value: career.length, href: '/admin/programmes/career', icon: GraduationCap },
+    { label: 'Certifications', value: certification.length, href: '/admin/programmes/certifications', icon: Award },
+    { label: 'Bootcamps', value: bootcamp.length, href: '/admin/programmes/bootcamps', icon: Rocket },
+    { label: 'Testimonials', value: testimonials.length, href: '/admin/testimonials', icon: Quote },
+    { label: 'Blog posts', value: posts.length, href: '/admin/blog', icon: Newspaper },
+    { label: 'New applications', value: newApplications, href: '/admin/applications/career', icon: Inbox },
   ]
 
   const recentSubmissions = submissions.slice(0, 5)
@@ -77,18 +77,33 @@ export default async function AdminDashboard() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {stats.map((s) => (
-          <Link key={s.label} href={s.href}>
-            <Card className="transition-colors hover:border-accent/50">
-              <div className="text-3xl font-semibold tracking-tight text-foreground">
-                {s.value}
+      {/* Compact Tabular Metric Card */}
+      <Card className="p-0 overflow-hidden shadow-sm border-border">
+        <div className="grid grid-cols-2 divide-y divide-border sm:grid-cols-3 lg:grid-cols-6 sm:divide-y-0 sm:divide-x">
+          {stats.map((s) => (
+            <Link
+              key={s.label}
+              href={s.href}
+              className="group flex flex-col justify-between p-4 transition-colors hover:bg-muted/30"
+            >
+              <div className="flex items-center justify-between gap-1.5">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors truncate">
+                  {s.label}
+                </span>
+                <s.icon className="size-3.5 text-muted-foreground/70 group-hover:text-accent transition-colors shrink-0" />
               </div>
-              <div className="mt-1 text-sm text-muted-foreground">{s.label}</div>
-            </Card>
-          </Link>
-        ))}
-      </div>
+              <div className="mt-3 flex items-baseline justify-between">
+                <span className="text-2xl font-bold tracking-tight text-foreground group-hover:text-accent transition-colors">
+                  {s.value}
+                </span>
+                <span className="text-[11px] font-medium text-muted-foreground/50 group-hover:text-accent group-hover:translate-x-0.5 transition-all">
+                  &rarr;
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </Card>
 
       {/* Application Summary - Full Width */}
       <Card className="flex flex-col">

@@ -1424,7 +1424,7 @@ export async function getApplications(track?: Track): Promise<ProgrammeApplicati
     }
     // Try filtering by is_archived = false
     let { data, error } = await query.eq('is_archived', false).order('created_at', { ascending: false })
-    if (error && (error.code === '42703' || error.code === 'PGRST204')) { // Column does not exist
+    if (error && (error.code === '42703' || error.code === 'PGRST204' || error.message?.includes('is_archived'))) { // Column does not exist
       // Retry without is_archived filter
       let queryRetry = supabase.from('programme_applications').select('*')
       if (track) {
@@ -1571,6 +1571,12 @@ export async function addApplication(
   input: Omit<ProgrammeApplication, 'id' | 'status' | 'createdAt'>,
 ) {
   const serviceClient = getServiceRoleClient()
+  
+  let formattedMessage = input.message || ''
+  if (input.paymentPlan && !formattedMessage.includes('[Plan:')) {
+    formattedMessage = `[Plan: ${input.paymentPlan}]\n${formattedMessage}`.trim()
+  }
+
   const insertObj: any = {
     id: id('app'),
     track: input.track,
@@ -1578,10 +1584,10 @@ export async function addApplication(
     programme_title: input.programmeTitle,
     name: input.name,
     email: input.email,
-    phone: input.phone,
+    phone: input.phone || '',
     experience: '',
     availability: '',
-    message: input.message,
+    message: formattedMessage,
     status: 'new',
     created_at: new Date().toISOString(),
   }
@@ -1591,15 +1597,16 @@ export async function addApplication(
   }
 
   const { error } = await serviceClient.from('programme_applications').insert(insertObj)
-  if (error && (error.code === '42703' || error.code === 'PGRST204' || error.message.includes('payment_plan'))) {
+  if (error && (error.code === '42703' || error.code === 'PGRST204' || error.message?.includes('payment_plan'))) {
     delete insertObj.payment_plan
-    if (input.paymentPlan) {
-      insertObj.message = `[Plan: ${input.paymentPlan}]\n${insertObj.message || ''}`.trim()
-    }
     const { error: retryError } = await serviceClient.from('programme_applications').insert(insertObj)
-    if (retryError) throw retryError
+    if (retryError) {
+      console.error('Database error in addApplication retry:', retryError)
+      throw new Error(`Failed to save application to database: ${retryError.message}`)
+    }
   } else if (error) {
-    throw error
+    console.error('Database error in addApplication:', error)
+    throw new Error(`Failed to save application to database: ${error.message}`)
   }
   try { revalidateTag('applications') } catch (e) {}
 }
@@ -1679,7 +1686,7 @@ export async function getContactSubmissionsPaged(
       .order('created_at', { ascending: false })
       .range(from, to)
 
-    if (error && (error.code === '42703' || error.code === 'PGRST204')) { // Column does not exist
+    if (error && (error.code === '42703' || error.code === 'PGRST204' || error.message?.includes('is_archived'))) { // Column does not exist
       if (isArchived) {
         return { items: [], totalCount: 0 }
       }

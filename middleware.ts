@@ -17,7 +17,7 @@ export async function middleware(request: NextRequest) {
   })
 
   // Allow login page to load without auth gating
-  if (pathname === '/admin/login') {
+  if (pathname === '/admin/login' || pathname === '/admin/login/') {
     return response
   }
 
@@ -45,7 +45,13 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  let user = null
+  try {
+    const { data } = await supabase.auth.getUser()
+    user = data?.user || null
+  } catch (err) {
+    console.error('Middleware auth check error:', err)
+  }
 
   // Redirect to login if unauthenticated
   if (!user) {
@@ -58,5 +64,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin', '/admin/:path*'],
 }
+

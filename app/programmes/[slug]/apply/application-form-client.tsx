@@ -46,6 +46,7 @@ export function ApplicationFormClient({
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   
   // Searchable Country Dropdown States
   const [selectedCountry, setSelectedCountry] = useState(countries[0]) // Default to UK (+44)
@@ -67,6 +68,7 @@ export function ApplicationFormClient({
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    setErrorMessage(null)
 
     const form = new FormData(e.currentTarget)
     const phoneExtension = selectedCountry.code
@@ -74,18 +76,28 @@ export function ApplicationFormClient({
     const fullPhone = `${phoneExtension} ${phoneNumberOnly}`
 
     startTransition(async () => {
-      const res = await submitApplication({
-        programmeSlug,
-        name: String(form.get('name') ?? ''),
-        email: String(form.get('email') ?? ''),
-        phone: fullPhone,
-        message: '',
-        paymentPlan: selectedPlan,
-      })
-      if (res?.redirectUrl) {
-        window.location.href = res.redirectUrl
-      } else {
-        router.push('/application-received')
+      try {
+        const res = await submitApplication({
+          programmeSlug,
+          name: String(form.get('name') ?? ''),
+          email: String(form.get('email') ?? ''),
+          phone: fullPhone,
+          message: '',
+          paymentPlan: selectedPlan,
+        })
+
+        if (!res.ok) {
+          setErrorMessage(res.error || 'Failed to submit application. Please try again.')
+          return
+        }
+
+        if (res?.redirectUrl) {
+          window.location.href = res.redirectUrl
+        } else {
+          router.push('/application-received')
+        }
+      } catch (err: any) {
+        setErrorMessage(err?.message || 'An unexpected error occurred while submitting your application.')
       }
     })
   }
@@ -101,6 +113,11 @@ export function ApplicationFormClient({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {errorMessage && (
+        <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3.5 text-sm font-medium text-red-600 dark:text-red-400">
+          {errorMessage}
+        </div>
+      )}
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <label htmlFor="name" className="text-sm font-medium text-foreground">

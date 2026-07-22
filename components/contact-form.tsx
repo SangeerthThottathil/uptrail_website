@@ -9,12 +9,14 @@ export function ContactForm() {
   const [submitted, setSubmitted] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [message, setMessage] = useState('')
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const wordCount = message.trim() ? message.trim().split(/\s+/).length : 0
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (wordCount > 200) return
+    setErrorMessage(null)
 
     const form = new FormData(e.currentTarget)
     const enquiryType = String(form.get('enquiryType') ?? 'individual')
@@ -23,17 +25,25 @@ export function ContactForm() {
     const fullPhone = `${phoneExtension} ${phoneNumberOnly}`
 
     startTransition(async () => {
-      await submitContact({
-        source: enquiryType === 'business' ? 'business' : 'contact',
-        name: String(form.get('name') ?? ''),
-        email: String(form.get('email') ?? ''),
-        message: message,
-        fields: { 
-          'Enquiry type': enquiryType,
-          'phone': fullPhone 
-        },
-      })
-      setSubmitted(true)
+      try {
+        const res = await submitContact({
+          source: enquiryType === 'business' ? 'business' : 'contact',
+          name: String(form.get('name') ?? ''),
+          email: String(form.get('email') ?? ''),
+          message: message,
+          fields: { 
+            'Enquiry type': enquiryType,
+            'phone': fullPhone 
+          },
+        })
+        if (!res.ok) {
+          setErrorMessage(res.error || 'Failed to send message. Please try again.')
+          return
+        }
+        setSubmitted(true)
+      } catch (err: any) {
+        setErrorMessage(err?.message || 'An unexpected error occurred. Please try again.')
+      }
     })
   }
 
@@ -59,6 +69,11 @@ export function ContactForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {errorMessage && (
+        <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3.5 text-sm font-medium text-red-600 dark:text-red-400">
+          {errorMessage}
+        </div>
+      )}
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <label htmlFor="name" className="text-sm font-medium text-foreground">

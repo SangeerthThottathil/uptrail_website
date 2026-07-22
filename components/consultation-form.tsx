@@ -20,23 +20,33 @@ const timeSlots = ['Weekday mornings', 'Weekday afternoons', 'Weekday evenings',
 export function ConsultationForm({ programmes = [] }: { programmes: Programme[] }) {
   const [submitted, setSubmitted] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    setErrorMessage(null)
     const form = new FormData(e.currentTarget)
     startTransition(async () => {
-      await submitContact({
-        source: 'consultation',
-        name: String(form.get('name') ?? ''),
-        email: String(form.get('email') ?? ''),
-        message: String(form.get('goals') ?? ''),
-        fields: {
-          'Programme of interest': String(form.get('programme') ?? ''),
-          'Where are you now': String(form.get('experience') ?? ''),
-          'Preferred call time': String(form.get('availability') ?? ''),
-        },
-      })
-      setSubmitted(true)
+      try {
+        const res = await submitContact({
+          source: 'consultation',
+          name: String(form.get('name') ?? ''),
+          email: String(form.get('email') ?? ''),
+          message: String(form.get('goals') ?? ''),
+          fields: {
+            'Programme of interest': String(form.get('programme') ?? ''),
+            'Where are you now': String(form.get('experience') ?? ''),
+            'Preferred call time': String(form.get('availability') ?? ''),
+          },
+        })
+        if (!res.ok) {
+          setErrorMessage(res.error || 'Failed to book consultation. Please try again.')
+          return
+        }
+        setSubmitted(true)
+      } catch (err: any) {
+        setErrorMessage(err?.message || 'An unexpected error occurred. Please try again.')
+      }
     })
   }
 
@@ -59,6 +69,11 @@ export function ConsultationForm({ programmes = [] }: { programmes: Programme[] 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {errorMessage && (
+        <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3.5 text-sm font-medium text-red-600 dark:text-red-400">
+          {errorMessage}
+        </div>
+      )}
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <label htmlFor="name" className="text-sm font-medium">

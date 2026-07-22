@@ -54,10 +54,12 @@ const inputClasses =
 export function BusinessForm({ variant }: { variant: Variant }) {
   const [submitted, setSubmitted] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const c = copy[variant]
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    setErrorMessage(null)
     const form = new FormData(e.currentTarget)
     const name = String(form.get('name') ?? '')
     const company = String(form.get('company') ?? '')
@@ -67,26 +69,36 @@ export function BusinessForm({ variant }: { variant: Variant }) {
     const message = String(form.get('message') ?? '')
 
     startTransition(async () => {
-      if (variant === 'hire') {
-        await submitHireTalent({
-          name,
-          company,
-          email,
-          numberOfHires: team,
-          rolesHiringFor: need,
-          message,
-        })
-      } else {
-        await submitDiscoveryCall({
-          name,
-          company,
-          email,
-          teamSize: team,
-          trainingArea: need,
-          message,
-        })
+      try {
+        let res: { ok: boolean; error?: string }
+        if (variant === 'hire') {
+          res = await submitHireTalent({
+            name,
+            company,
+            email,
+            numberOfHires: team,
+            rolesHiringFor: need,
+            message,
+          })
+        } else {
+          res = await submitDiscoveryCall({
+            name,
+            company,
+            email,
+            teamSize: team,
+            trainingArea: need,
+            message,
+          })
+        }
+
+        if (!res.ok) {
+          setErrorMessage(res.error || 'Failed to submit enquiry. Please try again.')
+          return
+        }
+        setSubmitted(true)
+      } catch (err: any) {
+        setErrorMessage(err?.message || 'An unexpected error occurred. Please try again.')
       }
-      setSubmitted(true)
     })
   }
 
@@ -110,6 +122,11 @@ export function BusinessForm({ variant }: { variant: Variant }) {
       onSubmit={handleSubmit}
       className="space-y-5 rounded-lg border border-border bg-background p-6 sm:p-8"
     >
+      {errorMessage && (
+        <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3.5 text-sm font-medium text-red-600 dark:text-red-400">
+          {errorMessage}
+        </div>
+      )}
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <label htmlFor="bf-name" className="text-sm font-medium">

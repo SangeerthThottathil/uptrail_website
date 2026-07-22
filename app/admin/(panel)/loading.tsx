@@ -7,14 +7,19 @@ export default function AdminLoading() {
         <div className="h-4 w-96 rounded bg-muted/50 mt-1" />
       </div>
 
-      {/* Grid of Cards Skeleton */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="h-28 rounded-xl border border-border bg-card p-6 flex flex-col justify-between">
-            <div className="h-8 w-12 rounded bg-muted/65" />
-            <div className="h-4 w-24 rounded bg-muted/50 mt-2" />
-          </div>
-        ))}
+      {/* Tabular Metric Card Skeleton */}
+      <div className="rounded-xl border border-border bg-card p-0 overflow-hidden shadow-sm">
+        <div className="grid grid-cols-2 divide-y divide-border sm:grid-cols-3 lg:grid-cols-6 sm:divide-y-0 sm:divide-x">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="p-4 flex flex-col justify-between h-20">
+              <div className="flex items-center justify-between">
+                <div className="h-3 w-20 rounded bg-muted/65" />
+                <div className="h-3.5 w-3.5 rounded-full bg-muted/50" />
+              </div>
+              <div className="h-6 w-8 rounded bg-muted/75" />
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Large Content Panels Skeletons */}
