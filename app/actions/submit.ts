@@ -64,6 +64,21 @@ function validateRedirectUrl(url: string): string | undefined {
   return undefined
 }
 
+function formatUserFacingError(err: any, fallbackMessage: string): string {
+  const raw = err?.message || ''
+  if (
+    !raw ||
+    raw.includes('Server Components render') ||
+    raw.includes('digest') ||
+    raw.includes('row-level security') ||
+    raw.includes('environment variables') ||
+    raw.includes('42501')
+  ) {
+    return fallbackMessage
+  }
+  return raw
+}
+
 /** Programme application (career / certification / bootcamp). */
 export async function submitApplication(input: {
   programmeSlug: string
@@ -130,7 +145,7 @@ export async function submitApplication(input: {
     return { ok: true, redirectUrl }
   } catch (err: any) {
     console.error('Error submitting application:', err)
-    return { ok: false, error: err?.message || 'Failed to submit application. Please try again.' }
+    return { ok: false, error: formatUserFacingError(err, 'Failed to submit application. Please try again.') }
   }
 }
 
@@ -182,7 +197,7 @@ export async function submitContact(input: {
     return { ok: true }
   } catch (err: any) {
     console.error('Error submitting contact form:', err)
-    return { ok: false, error: err?.message || 'Failed to submit enquiry. Please try again.' }
+    return { ok: false, error: formatUserFacingError(err, 'Failed to submit enquiry. Please try again.') }
   }
 }
 
@@ -229,7 +244,7 @@ export async function submitHireTalent(input: {
     return { ok: true }
   } catch (err: any) {
     console.error('Error submitting hire talent enquiry:', err)
-    return { ok: false, error: err?.message || 'Failed to submit enquiry. Please try again.' }
+    return { ok: false, error: formatUserFacingError(err, 'Failed to submit enquiry. Please try again.') }
   }
 }
 
@@ -276,6 +291,6 @@ export async function submitDiscoveryCall(input: {
     return { ok: true }
   } catch (err: any) {
     console.error('Error submitting discovery call enquiry:', err)
-    return { ok: false, error: err?.message || 'Failed to submit enquiry. Please try again.' }
+    return { ok: false, error: formatUserFacingError(err, 'Failed to submit enquiry. Please try again.') }
   }
 }

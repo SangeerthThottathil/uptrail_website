@@ -37,12 +37,16 @@ export function ContactForm() {
           },
         })
         if (!res.ok) {
-          setErrorMessage(res.error || 'Failed to send message. Please try again.')
+          const rawErr = res.error || ''
+          const cleanErr = (rawErr.includes('Server Components render') || rawErr.includes('digest'))
+            ? 'Failed to send message. Please try again or email us directly.'
+            : (rawErr || 'Failed to send message. Please try again.')
+          setErrorMessage(cleanErr)
           return
         }
         setSubmitted(true)
       } catch (err: any) {
-        setErrorMessage(err?.message || 'An unexpected error occurred. Please try again.')
+        setErrorMessage('Failed to send message. Please try again or email us directly.')
       }
     })
   }

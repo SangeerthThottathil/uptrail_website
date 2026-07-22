@@ -1744,17 +1744,25 @@ export async function addContactSubmission(
   input: Omit<ContactSubmission, 'id' | 'read' | 'createdAt'>,
 ) {
   const serviceClient = getServiceRoleClient()
-  const { error } = await serviceClient.from('contact_submissions').insert({
+  const insertObj = {
     id: id('msg'),
     source: input.source,
     name: input.name,
     email: input.email,
-    fields: input.fields,
-    message: input.message,
+    fields: input.fields || {},
+    message: input.message || '',
     read: false,
     created_at: new Date().toISOString(),
-  })
-  if (error) throw error
+  }
+  const { error } = await serviceClient.from('contact_submissions').insert(insertObj)
+  if (error && (error.code === 'PGRST204' || error.message.includes('fields'))) {
+    // Retry without fields column if fields is not in schema
+    const { fields, ...rest } = insertObj
+    const { error: err2 } = await serviceClient.from('contact_submissions').insert(rest)
+    if (err2) throw err2
+  } else if (error) {
+    throw error
+  }
 }
 
 export async function setContactSubmissionRead(msgId: string, read: boolean) {

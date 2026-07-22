@@ -40,12 +40,16 @@ export function ConsultationForm({ programmes = [] }: { programmes: Programme[] 
           },
         })
         if (!res.ok) {
-          setErrorMessage(res.error || 'Failed to book consultation. Please try again.')
+          const rawErr = res.error || ''
+          const cleanErr = (rawErr.includes('Server Components render') || rawErr.includes('digest'))
+            ? 'Failed to book consultation. Please try again or email us directly.'
+            : (rawErr || 'Failed to book consultation. Please try again.')
+          setErrorMessage(cleanErr)
           return
         }
         setSubmitted(true)
       } catch (err: any) {
-        setErrorMessage(err?.message || 'An unexpected error occurred. Please try again.')
+        setErrorMessage('Failed to book consultation. Please try again or email us directly.')
       }
     })
   }

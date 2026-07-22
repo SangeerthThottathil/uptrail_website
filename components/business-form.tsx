@@ -92,12 +92,16 @@ export function BusinessForm({ variant }: { variant: Variant }) {
         }
 
         if (!res.ok) {
-          setErrorMessage(res.error || 'Failed to submit enquiry. Please try again.')
+          const rawErr = res.error || ''
+          const cleanErr = (rawErr.includes('Server Components render') || rawErr.includes('digest'))
+            ? 'Failed to submit enquiry. Please try again or email us directly.'
+            : (rawErr || 'Failed to submit enquiry. Please try again.')
+          setErrorMessage(cleanErr)
           return
         }
         setSubmitted(true)
       } catch (err: any) {
-        setErrorMessage(err?.message || 'An unexpected error occurred. Please try again.')
+        setErrorMessage('Failed to submit enquiry. Please try again or email us directly.')
       }
     })
   }

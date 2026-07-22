@@ -87,7 +87,11 @@ export function ApplicationFormClient({
         })
 
         if (!res.ok) {
-          setErrorMessage(res.error || 'Failed to submit application. Please try again.')
+          const rawErr = res.error || ''
+          const cleanErr = (rawErr.includes('Server Components render') || rawErr.includes('digest'))
+            ? 'Failed to submit application. Please try again or contact our team.'
+            : (rawErr || 'Failed to submit application. Please try again.')
+          setErrorMessage(cleanErr)
           return
         }
 
@@ -97,7 +101,7 @@ export function ApplicationFormClient({
           router.push('/application-received')
         }
       } catch (err: any) {
-        setErrorMessage(err?.message || 'An unexpected error occurred while submitting your application.')
+        setErrorMessage('Failed to submit application. Please try again or contact our team.')
       }
     })
   }
