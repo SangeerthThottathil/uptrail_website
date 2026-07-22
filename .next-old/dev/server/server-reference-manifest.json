@@ -1,0 +1,54 @@
+{
+  "node": {
+    "00132cd0a4b73e57d763db9f98603a435308e5a053": {
+      "workers": {
+        "app/admin/(panel)/programmes/[track]/new/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/(panel)/programmes/[track]/new/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/admin/actions/auth.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/app/admin/actions/content.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "logout",
+          "filename": "app/admin/actions/auth.ts"
+        }
+      },
+      "filename": "app/admin/actions/auth.ts",
+      "exportedName": "logout"
+    },
+    "60f77a244859dc26b54323d6c266f6be7ee6a0c873": {
+      "workers": {
+        "app/admin/(panel)/programmes/[track]/new/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/(panel)/programmes/[track]/new/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/admin/actions/auth.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/app/admin/actions/content.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "saveProgramme",
+          "filename": "app/admin/actions/content.ts"
+        }
+      },
+      "filename": "app/admin/actions/content.ts",
+      "exportedName": "saveProgramme"
+    },
+    "40701158e453f4181b719c983bb78280e817bccb6b": {
+      "workers": {
+        "app/admin/(panel)/programmes/[track]/new/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/(panel)/programmes/[track]/new/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/admin/actions/auth.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/app/admin/actions/content.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "removeProgramme",
+          "filename": "app/admin/actions/content.ts"
+        }
+      },
+      "filename": "app/admin/actions/content.ts",
+      "exportedName": "removeProgramme"
+    },
+    "4037cf705a770f872762b1f4f2590637c1a33add07": {
+      "workers": {
+        "app/admin/(panel)/programmes/[track]/new/page": {
+          "moduleId": "[project]/.next-internal/server/app/admin/(panel)/programmes/[track]/new/page/actions.js { ACTIONS_MODULE0 => \"[project]/app/admin/actions/auth.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/app/admin/actions/content.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "uploadFile",
+          "filename": "app/admin/actions/content.ts"
+        }
+      },
+      "filename": "app/admin/actions/content.ts",
+      "exportedName": "uploadFile"
+    }
+  },
+  "edge": {},
+  "encryptionKey": "4ThA5ITVpva7UHdye/W/T9vO5zS15y92e3r9Ke3xY1k="
+}

@@ -1,0 +1,21 @@
+{
+  "titleEl": {
+    "exists": true,
+    "html": "<div id=\"admin-header-title\" class=\"text-lg font-semibold tracking-tight text-foreground truncate\"></div>",
+    "textContent": ""
+  },
+  "actionsEl": {
+    "exists": true,
+    "html": "<div id=\"admin-header-actions\" class=\"flex items-center gap-2\"></div>"
+  },
+  "pageErrors": [],
+  "failedRequests": [],
+  "consoleLogs": [
+    "[info] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold",
+    "[error] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr?id=USUbiCertOs4X2687SjYy' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE",
+    "[error] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr?id=USUbiCertOs4X2687SjYy' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE",
+    "[error] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr?id=USUbiCertOs4X2687SjYy' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE",
+    "[error] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr?id=USUbiCertOs4X2687SjYy' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE",
+    "[error] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr?id=USUbiCertOs4X2687SjYy' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE"
+  ]
+}

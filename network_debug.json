@@ -1,0 +1,142 @@
+[
+  {
+    "url": "http://127.0.0.1:3000/admin/programmes/career/new",
+    "method": "GET",
+    "resourceType": "document"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/media/0c89a48fa5027cee-s.p.0rd3rjvnnhw7n.woff2",
+    "method": "GET",
+    "resourceType": "font"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/media/70bc3e132a0a741e-s.p.1409xf.ylxg8g.woff2",
+    "method": "GET",
+    "resourceType": "font"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+    "method": "GET",
+    "resourceType": "font"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/chunks/%5Broot-of-the-server%5D__095yqu9._.css",
+    "method": "GET",
+    "resourceType": "stylesheet"
+  },
+  {
+    "url": "http://127.0.0.1:3000/uptrail-logo.svg",
+    "method": "GET",
+    "resourceType": "image"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_0b.8iqq._.js",
+    "method": "GET",
+    "resourceType": "script"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/chunks/07vw_next_dist_compiled_next-devtools_index_03.cfhv.js",
+    "method": "GET",
+    "resourceType": "script"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/chunks/07vw_next_dist_compiled_react-dom_0a2wv7t._.js",
+    "method": "GET",
+    "resourceType": "script"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/chunks/07vw_next_dist_compiled_react-server-dom-turbopack_0upz.6p._.js",
+    "method": "GET",
+    "resourceType": "script"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/chunks/07vw_next_dist_compiled_0w0chkj._.js",
+    "method": "GET",
+    "resourceType": "script"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/chunks/07vw_next_dist_client_04oxss2._.js",
+    "method": "GET",
+    "resourceType": "script"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/chunks/07vw_next_dist_13_qw0k._.js",
+    "method": "GET",
+    "resourceType": "script"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/chunks/0i4a_%40swc_helpers_cjs_0hvz.20._.js",
+    "method": "GET",
+    "resourceType": "script"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/chunks/_0rqeker._.js",
+    "method": "GET",
+    "resourceType": "script"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/chunks/turbopack-_0t6qet0._.js",
+    "method": "GET",
+    "resourceType": "script"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/chunks/_07l1bwk._.js",
+    "method": "GET",
+    "resourceType": "script"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/chunks/node_modules__pnpm_0n9ke02._.js",
+    "method": "GET",
+    "resourceType": "script"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/chunks/app_layout_tsx_12hqr.w._.js",
+    "method": "GET",
+    "resourceType": "script"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/chunks/app_loading_tsx_0yfo5uc._.js",
+    "method": "GET",
+    "resourceType": "script"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/chunks/_13i4_wn._.js",
+    "method": "GET",
+    "resourceType": "script"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/chunks/app_admin_(panel)_layout_tsx_0yfo5uc._.js",
+    "method": "GET",
+    "resourceType": "script"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/chunks/07vw_next_dist_client_components_builtin_global-error_0yfo5uc.js",
+    "method": "GET",
+    "resourceType": "script"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/chunks/_097a~hq._.js",
+    "method": "GET",
+    "resourceType": "script"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/chunks/122s_lucide-react_dist_esm_icons_0hsq8aa._.js",
+    "method": "GET",
+    "resourceType": "script"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/chunks/app_admin_(panel)_programmes_%5Btrack%5D_new_page_tsx_0fdr0wt._.js",
+    "method": "GET",
+    "resourceType": "script"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_0yjw1oe._.js",
+    "method": "GET",
+    "resourceType": "script"
+  },
+  {
+    "url": "http://127.0.0.1:3000/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_0r7riyc._.js",
+    "method": "GET",
+    "resourceType": "script"
+  }
+]

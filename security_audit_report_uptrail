@@ -1,0 +1,653 @@
+# 🔒 Security Audit Report — Uptrail Website & Admin Panel
+
+**Audit Date:** 2026-07-22  
+**Codebase:** Next.js 16 + Supabase + Netlify  
+**Auditor Role:** Senior Security Engineer  
+
+---
+
+## 🚨 Top 10 Critical Issues Summary
+
+| # | Severity | Issue | Location |
+|---|----------|-------|----------|
+| 1 | **CRITICAL** | Admin server actions have NO authentication checks | [content.ts](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/admin/actions/content.ts) |
+| 2 | **CRITICAL** | File upload has no file-type validation — arbitrary file upload possible | [content.ts#L162-L221](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/admin/actions/content.ts#L162-L221) |
+| 3 | **CRITICAL** | Privacy Policy & Terms pages render HTML without sanitization (Stored XSS) | [privacy-policy/page.tsx#L30](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/privacy-policy/page.tsx#L30), [terms-and-conditions/page.tsx#L30](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/terms-and-conditions/page.tsx#L30) |
+| 4 | **HIGH** | Sanitizer allows `<iframe>` and `style` — XSS via crafted iframe `src` or CSS | [sanitize.ts#L12-L23](file:///c:/Users/habib/Downloads/admin-panel-plan-2/lib/sanitize.ts#L12-L23) |
+| 5 | **HIGH** | No backend input validation on any public form submission | [submit.ts](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/actions/submit.ts) |
+| 6 | **HIGH** | No rate limiting on form submissions — spam/DoS risk | [submit.ts](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/actions/submit.ts) |
+| 7 | **HIGH** | `application-received` page is publicly accessible without prior submission | [application-received/page.tsx](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/application-received/page.tsx) |
+| 8 | **HIGH** | `bodySizeLimit: '10mb'` for server actions with no per-field limits | [next.config.mjs#L11](file:///c:/Users/habib/Downloads/admin-panel-plan-2/next.config.mjs#L11) |
+| 9 | **MEDIUM** | No security headers configured (CSP, HSTS, X-Frame-Options, etc.) | [next.config.mjs](file:///c:/Users/habib/Downloads/admin-panel-plan-2/next.config.mjs), [netlify.toml](file:///c:/Users/habib/Downloads/admin-panel-plan-2/netlify.toml) |
+| 10 | **MEDIUM** | Supabase Storage bucket created with `public: true` — all uploads publicly accessible | [content.ts#L182](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/admin/actions/content.ts#L182) |
+
+---
+
+## 1. AUTHENTICATION & SESSION SECURITY
+
+### ✅ What's Done Well
+- Supabase Auth handles password hashing (bcrypt on Supabase side) — no custom crypto.
+- Middleware correctly uses `getUser()` (server-side JWT verification, not just `getSession()`).
+- Session cookies are managed via `@supabase/ssr` with HttpOnly cookies.
+- Logout calls `supabase.auth.signOut()` which invalidates the refresh token.
+- Login redirect is restricted to `/admin` paths (line 26 of `auth.ts`).
+
+### ⚠️ Issue 1.1: Login `from` Parameter Open Redirect (Partially Mitigated)
+
+- **Severity:** Low
+- **Issue:** The login form passes a `from` query param, and the server action validates it starts with `/admin`. This is properly scoped but the `from` value originates from `searchParams` which a user controls.
+- **Impact:** An attacker could craft a URL like `/admin/login?from=/admin/../../evil` though the `startsWith('/admin')` check largely mitigates this. The current implementation is acceptable.
+- **Location:** [auth.ts#L14-L26](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/admin/actions/auth.ts#L14-L26)
+- **Fix:** Already mitigated. Optionally, add an explicit URL parsing + pathname check:
+  ```ts
+  const safePath = from.startsWith('/admin') ? from : '/admin'
+  redirect(safePath)
+  ```
+
+---
+
+## 2. AUTHORIZATION — 🚨 CRITICAL FINDINGS
+
+### 🔴 Issue 2.1: Admin Server Actions Have NO Authentication Checks
+
+- **Severity:** **CRITICAL**
+- **Issue:** Every admin server action in [content.ts](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/admin/actions/content.ts) (`saveProgramme`, `removeProgramme`, `saveSettings`, `seedDbAction`, `changeApplicationStatus`, `removeApplication`, `uploadFile`, `deleteApplicationsAction`, etc.) performs **zero** authentication verification. They are marked `'use server'` but never call `getUser()` or check the session.
+- **Impact:** **Any unauthenticated user** can invoke these server actions directly via HTTP POST. An attacker can:
+  - Modify/delete all programmes, testimonials, blog posts, settings
+  - Upload arbitrary files
+  - Delete all user applications and submissions
+  - Seed/wipe the entire database
+  - Change site settings (redirect URLs, privacy policy content)
+- **Location:** [content.ts](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/admin/actions/content.ts) — ALL 20+ exported functions
+- **Fix:** Add authentication guard to every admin server action:
+
+```ts
+// app/admin/actions/content.ts - Add at top
+import { createActionClient } from '@/lib/supabase'
+
+async function requireAdmin() {
+  const supabase = await createActionClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error('Unauthorized')
+  }
+  return user
+}
+
+// Then in every exported function:
+export async function saveProgramme(programme: Programme, originalSlug?: string) {
+  await requireAdmin()  // ← ADD THIS
+  await store.upsertProgramme(programme, originalSlug)
+  refreshAll()
+}
+```
+
+> [!CAUTION]
+> **This is your #1 priority fix.** The middleware only protects page rendering (GET requests to `/admin/*`). Server Actions are callable independently — they are not protected by the route middleware. Every admin action can be invoked by an unauthenticated user today.
+
+### 🟡 Issue 2.2: No Role-Based Access Control
+
+- **Severity:** Medium
+- **Issue:** Any authenticated Supabase user (not necessarily an admin) could invoke admin actions. There is no role check — only session existence.
+- **Impact:** If Supabase Auth has non-admin users (e.g., if you later add user-facing auth), they would have full admin access.
+- **Location:** Entire admin actions layer
+- **Fix:** Add a role check or restrict to specific email addresses:
+  ```ts
+  const ADMIN_EMAILS = ['admin@uptrail.com']
+  
+  async function requireAdmin() {
+    const supabase = await createActionClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user || !ADMIN_EMAILS.includes(user.email!)) {
+      throw new Error('Unauthorized')
+    }
+  }
+  ```
+
+---
+
+## 3. FORM INPUT SECURITY
+
+### 🔴 Issue 3.1: No Backend Input Validation on Public Form Submissions
+
+- **Severity:** High
+- **Issue:** All public server actions in [submit.ts](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/actions/submit.ts) accept user input and insert it directly into the database without validation. There is:
+  - No email format validation
+  - No name length limits
+  - No message length enforcement server-side (the 200-word limit in `ContactForm` is client-side only)
+  - No phone number validation
+  - No sanitization of input strings
+- **Impact:** 
+  - Stored XSS: Malicious `name`, `email`, or `message` fields containing `<script>` tags are stored in DB and rendered in the admin panel
+  - Data pollution: Extremely long strings could be injected
+  - The admin panel's submissions list renders these values directly
+- **Location:** [submit.ts](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/actions/submit.ts) — all 4 exported functions
+- **Fix:**
+```ts
+import DOMPurify from 'isomorphic-dompurify'
+
+function sanitizeText(input: string, maxLength: number = 500): string {
+  const text = DOMPurify.sanitize(input, { ALLOWED_TAGS: [] }) // strip all HTML
+  return text.slice(0, maxLength).trim()
+}
+
+function validateEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 254
+}
+
+export async function submitApplication(input: { ... }) {
+  if (!input.name || !input.email) throw new Error('Required fields missing')
+  if (!validateEmail(input.email)) throw new Error('Invalid email')
+  
+  const sanitizedInput = {
+    ...input,
+    name: sanitizeText(input.name, 100),
+    email: sanitizeText(input.email, 254),
+    message: sanitizeText(input.message ?? '', 2000),
+    phone: sanitizeText(input.phone ?? '', 20),
+  }
+  // ... proceed with sanitizedInput
+}
+```
+
+### 🟡 Issue 3.2: `fields` Object in `submitContact` Accepts Arbitrary Keys
+
+- **Severity:** Medium
+- **Issue:** `submitContact` accepts `fields?: Record<string, string>` which is stored as JSONB in Supabase. A malicious client could inject arbitrary key-value pairs.
+- **Impact:** Data pollution, potential issues if field keys are used in rendering without escaping.
+- **Location:** [submit.ts#L56-L57](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/actions/submit.ts#L56-L57)
+- **Fix:** Whitelist allowed field keys:
+```ts
+const ALLOWED_FIELD_KEYS = ['Programme of interest', 'Where are you now', 'Preferred call time', 'Enquiry type', 'phone']
+const sanitizedFields = Object.fromEntries(
+  Object.entries(input.fields ?? {}).filter(([key]) => ALLOWED_FIELD_KEYS.includes(key))
+)
+```
+
+---
+
+## 4. REDIRECT URL AFTER FORM SUBMISSION
+
+### 🔴 Issue 4.1: Redirect URL Controlled by Admin-Defined Database Value
+
+- **Severity:** High (if admin actions are unprotected — see Issue 2.1)
+- **Issue:** `submitApplication` returns `{ ok: true, redirectUrl }` where `redirectUrl` comes from `selectedOption.redirectUrl` or `settings.general.applicationRedirectUrl` — both stored in the database. Since admin actions currently lack authentication (Issue 2.1), an attacker could:
+  1. Call `saveSettings()` to set `applicationRedirectUrl` to a phishing URL
+  2. All future applicants get redirected to the attacker's site
+- **Impact:** Phishing attack against all form submitters.
+- **Location:** [submit.ts#L31-L47](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/actions/submit.ts#L31-L47)
+- **Fix:** 
+  1. Fix Issue 2.1 (authenticate admin actions) — this is the root cause
+  2. Validate redirect URLs server-side:
+  ```ts
+  function isAllowedRedirectUrl(url: string): boolean {
+    try {
+      const parsed = new URL(url)
+      const allowed = ['uptrail.com', 'www.uptrail.com']
+      return allowed.some(d => parsed.hostname === d || parsed.hostname.endsWith('.' + d))
+    } catch {
+      return url.startsWith('/') // allow relative paths
+    }
+  }
+  ```
+
+### 🟡 Issue 4.2: `application-received` Page Accessible Without Submission
+
+- **Severity:** High
+- **Issue:** The `/application-received` page is a static page with no verification that a form was actually submitted. Anyone can navigate directly to this URL.
+- **Impact:** Minor information disclosure, but more importantly, this page could be used in social engineering ("look, I already applied").
+- **Location:** [application-received/page.tsx](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/application-received/page.tsx)
+- **Fix:** Add a token-based verification:
+  ```ts
+  // In submitApplication: generate a one-time token
+  const token = crypto.randomUUID()
+  // Store token in a short-lived cookie or pass as query param
+  return { ok: true, redirectUrl, confirmToken: token }
+  
+  // In application-received/page.tsx: verify the token exists
+  ```
+
+---
+
+## 5. USER DATA ACCESS
+
+### 🟡 Issue 5.1: All Submission Data Queries Use Service Role Key
+
+- **Severity:** Medium
+- **Issue:** All functions that read application/contact data (`getApplications`, `getContactSubmissions`, `getApplicationsPaged`, etc.) use `getServiceRoleClient()` which bypasses RLS entirely.
+- **Impact:** While these functions are only called from admin pages (protected by middleware), the lack of RLS means any bug or future refactoring could expose all user PII without access control at the database level.
+- **Location:** [store.ts#L1418-L1568](file:///c:/Users/habib/Downloads/admin-panel-plan-2/lib/store/store.ts#L1418-L1568)
+- **Fix:** Enable RLS on `programme_applications` and `contact_submissions` tables with policies:
+  ```sql
+  ALTER TABLE programme_applications ENABLE ROW LEVEL SECURITY;
+  CREATE POLICY "Only admin can read applications" ON programme_applications
+    FOR SELECT USING (auth.role() = 'service_role');
+  ```
+
+### ✅ Issue 5.2: No User Enumeration Risk (Acceptable)
+
+The system does not have user-facing accounts (only admin), so user enumeration is not a concern for the public forms. The login page returns generic error messages from Supabase Auth.
+
+---
+
+## 6. FILE UPLOAD SECURITY — 🚨 CRITICAL
+
+### 🔴 Issue 6.1: No File Type Validation — Arbitrary File Upload
+
+- **Severity:** **CRITICAL**
+- **Issue:** The `uploadFile` function in [content.ts#L162-L221](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/admin/actions/content.ts#L162-L221) accepts **any file** — there is zero validation of:
+  - File extension (`.html`, `.php`, `.svg`, `.exe` all accepted)
+  - MIME type (the `file.type` is passed to Supabase but not validated)
+  - File content (no magic byte checking)
+- **Impact:** Combined with Issue 2.1 (no auth on upload), anyone can upload:
+  - HTML files with JavaScript (XSS via direct URL access)
+  - SVG files with embedded scripts
+  - Server-side scripts (if local fallback is used in certain hosting)
+  - Malware or illegal content
+- **Location:** [content.ts#L162-L221](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/admin/actions/content.ts#L162-L221)
+- **Fix:**
+```ts
+const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.pdf']
+const ALLOWED_MIME_TYPES = [
+  'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'application/pdf'
+]
+const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+
+export async function uploadFile(formData: FormData) {
+  await requireAdmin() // Fix Issue 2.1 first
+  
+  const file = formData.get('file') as File | null
+  if (!file) return { error: 'No file provided' }
+  
+  // Validate file size
+  if (file.size > MAX_FILE_SIZE) return { error: 'File too large (max 5MB)' }
+  
+  // Validate extension
+  const ext = path.extname(file.name).toLowerCase()
+  if (!ALLOWED_EXTENSIONS.includes(ext)) {
+    return { error: `File type not allowed: ${ext}` }
+  }
+  
+  // Validate MIME type
+  if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+    return { error: `MIME type not allowed: ${file.type}` }
+  }
+  
+  // For SVGs, additional sanitization is needed
+  if (ext === '.svg') {
+    const text = await file.text()
+    if (text.includes('<script') || text.includes('javascript:') || text.includes('on')) {
+      return { error: 'SVG contains potentially unsafe content' }
+    }
+  }
+  // ... proceed
+}
+```
+
+### 🟡 Issue 6.2: No File Size Limit in Upload Action
+
+- **Severity:** High  
+- **Issue:** While `next.config.mjs` sets `bodySizeLimit: '10mb'`, the upload function itself has no size check. Combined with the lack of auth, this enables DoS via large file uploads.
+- **Location:** [content.ts#L162](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/admin/actions/content.ts#L162)
+- **Fix:** Add explicit size validation (see code above).
+
+### 🟡 Issue 6.3: Supabase Storage Bucket is Public
+
+- **Severity:** Medium
+- **Issue:** The upload bucket is created with `{ public: true }` (line 182). All uploaded files are publicly accessible to anyone with the URL.
+- **Impact:** Uploaded images/documents are accessible without authentication. If sensitive documents are uploaded, they're exposed.
+- **Location:** [content.ts#L182](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/admin/actions/content.ts#L182)
+- **Fix:** If uploads include sensitive documents, use `public: false` with signed URLs. For images on a public site, `public: true` is acceptable but should be documented as a conscious decision.
+
+### 🟡 Issue 6.4: Local Filesystem Fallback Writes to `public/uploads`
+
+- **Severity:** Medium
+- **Issue:** The fallback path writes files to `public/uploads/` which makes them directly accessible and potentially executable on certain hosting configurations.
+- **Location:** [content.ts#L207-L212](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/admin/actions/content.ts#L207-L212)
+- **Fix:** Remove the local fallback for production. If needed for development, validate file types strictly.
+
+---
+
+## 7. API SECURITY
+
+### ✅ No REST API Routes Found
+
+The app uses Next.js Server Actions rather than API Route Handlers. The `app/api/test` and `app/api/test-upload` directories are empty.
+
+### 🟡 Issue 7.1: Server Actions Lack Schema Validation
+
+- **Severity:** Medium
+- **Issue:** Server actions accept typed objects but don't validate at runtime. TypeScript types are compile-time only — at runtime, any JSON shape can be sent.
+- **Impact:** Unexpected fields could be injected, or required fields could be missing, causing unexpected behavior.
+- **Location:** All server actions in [submit.ts](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/actions/submit.ts) and [content.ts](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/admin/actions/content.ts)
+- **Fix:** Use Zod schemas for runtime validation:
+```ts
+import { z } from 'zod'
+
+const applicationSchema = z.object({
+  programmeSlug: z.string().min(1).max(200),
+  name: z.string().min(1).max(100),
+  email: z.string().email().max(254),
+  phone: z.string().max(20).optional(),
+  message: z.string().max(2000).optional(),
+  paymentPlan: z.string().max(200).optional(),
+})
+
+export async function submitApplication(raw: unknown) {
+  const input = applicationSchema.parse(raw)
+  // ... proceed
+}
+```
+
+---
+
+## 8. ADMIN PANEL SECURITY
+
+### 🔴 Issue 8.1: Stored XSS via User-Submitted Data Displayed in Admin Panel
+
+- **Severity:** High
+- **Issue:** The admin dashboard and submission lists render user-submitted `name`, `email`, and `message` fields directly via React JSX (e.g., `{m.name}`, `{m.email}`). While React auto-escapes JSX expressions, the admin *does* display fields like phone numbers and messages that come from the `fields` JSONB column, which could contain HTML if not sanitized on input.
+- **Impact:** If any rendering path uses `dangerouslySetInnerHTML` with user data (or if a future change adds it), stored XSS in the admin panel would give an attacker full admin privileges.
+- **Location:** [admin dashboard page.tsx#L162-L172](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/admin/(panel)/page.tsx#L162-L172), admin list components
+- **Fix:** 
+  - Sanitize all inputs at write time (see Issue 3.1)
+  - The current rendering in React JSX `{m.name}` is safe for now, but input sanitization is still needed as defense-in-depth
+
+### ✅ Issue 8.2: Admin Routes Protected by Middleware (Page-Level)
+
+The middleware correctly redirects unauthenticated users away from `/admin/*` routes. However, this only protects page rendering — **not server actions** (see Issue 2.1).
+
+---
+
+## 9. DATABASE & DATA SECURITY
+
+### 🟡 Issue 9.1: All Write Operations Use Service Role Key (Bypasses RLS)
+
+- **Severity:** Medium
+- **Issue:** Every write operation uses `getServiceRoleClient()` which has full `service_role` access, bypassing all Row Level Security policies. This is by design for server-side operations but means RLS provides zero protection.
+- **Impact:** Any code path that reaches the store layer can read/write any data without restrictions.
+- **Location:** [store.ts](file:///c:/Users/habib/Downloads/admin-panel-plan-2/lib/store/store.ts) — all write functions
+- **Fix:** Since this is a single-admin system, the current approach is acceptable but should be documented. Ensure RLS is enabled on sensitive tables as a safety net, with `service_role` bypass policies.
+
+### ✅ Issue 9.2: ORM/Query Builder Safety
+
+Supabase JS client uses parameterized queries internally. The codebase does not construct raw SQL strings. **No SQL injection risk detected.**
+
+---
+
+## 10. SECRETS & CONFIGURATION
+
+### 🟡 Issue 10.1: Service Role Key in `.env.local`
+
+- **Severity:** Low (if `.gitignore` is correct)
+- **Issue:** The `SUPABASE_SERVICE_ROLE_KEY` is stored in `.env.local`. The `.gitignore` file correctly excludes `.env*.local` files.
+- **Location:** [.env.local#L6](file:///c:/Users/habib/Downloads/admin-panel-plan-2/.env.local#L6)
+- **Fix:** ✅ Already handled correctly. Verify it's not committed to git:
+  ```bash
+  git log --all -- .env.local
+  ```
+
+### ✅ Issue 10.2: Public Keys Use `NEXT_PUBLIC_` Prefix (Correct)
+
+The `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are correctly prefixed for client-side exposure. The service role key uses `SUPABASE_SERVICE_ROLE_KEY` (no `NEXT_PUBLIC_`) which is server-only.
+
+### 🟡 Issue 10.3: Debug Files in Repository Root
+
+- **Severity:** Low
+- **Issue:** Files like `network_debug.json`, `playwright_debug.json`, `schema_debug.json`, and `dom_tree.html` are in the repository root. These may contain sensitive information or internal structure details.
+- **Location:** Repository root
+- **Fix:** Add these to `.gitignore` and remove from tracking:
+  ```
+  network_debug.json
+  playwright_debug.json
+  schema_debug.json
+  dom_tree.html
+  ```
+
+### 🟡 Issue 10.4: `console.log` in Production Code Leaks Pathname
+
+- **Severity:** Low
+- **Issue:** `RootLayout` contains `console.log("RootLayout incoming x-pathname header:", ...)` which leaks internal routing info in server logs.
+- **Location:** [layout.tsx#L52](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/layout.tsx#L52)
+- **Fix:** Remove or gate behind `NODE_ENV === 'development'`.
+
+---
+
+## 11. FRONTEND SECURITY
+
+### 🔴 Issue 11.1: Privacy Policy & Terms Pages Render Unsanitized HTML
+
+- **Severity:** **CRITICAL**
+- **Issue:** The privacy policy and terms pages use `dangerouslySetInnerHTML={{ __html: contentHtml }}` where `contentHtml` comes directly from `settings.general.privacy_policy_content` / `settings.general.terms_conditions_content` — **without any sanitization**.
+- **Impact:** If an attacker modifies settings via the unprotected `saveSettings` action (Issue 2.1), they can inject arbitrary JavaScript that executes for every visitor to these pages. This is a direct Stored XSS → full site takeover chain.
+- **Location:** [privacy-policy/page.tsx#L30](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/privacy-policy/page.tsx#L30), [terms-and-conditions/page.tsx#L30](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/terms-and-conditions/page.tsx#L30)
+- **Fix:** Sanitize the HTML before rendering:
+```tsx
+import { sanitizeHtml } from '@/lib/sanitize'
+
+// In the component:
+const contentHtml = sanitizeHtml(
+  settings.general.privacy_policy_content ||
+  '<p>Privacy policy content is not set yet.</p>'
+)
+```
+
+### 🟡 Issue 11.2: DOMPurify Config Allows `iframe` and `style` — Broad Attack Surface
+
+- **Severity:** High
+- **Issue:** The `sanitizeHtml` function in [sanitize.ts](file:///c:/Users/habib/Downloads/admin-panel-plan-2/lib/sanitize.ts) adds `iframe`, `video`, and `source` to the allowed tags, and allows `style` and `class` attributes. While DOMPurify is solid, allowing `iframe` means:
+  - An admin-injected iframe could point to a malicious page
+  - The `style` attribute can enable UI redressing / clickjacking
+- **Impact:** If admin accounts are compromised (easier given Issue 2.1), attackers can embed iframes to arbitrary domains in blog posts.
+- **Location:** [sanitize.ts#L12-L23](file:///c:/Users/habib/Downloads/admin-panel-plan-2/lib/sanitize.ts#L12-L23)
+- **Fix:** Add a `ALLOWED_URI_REGEXP` to DOMPurify to restrict iframe `src` values:
+```ts
+return DOMPurify.sanitize(html, {
+  ADD_TAGS: ['iframe', 'video', 'source'],
+  ADD_ATTR: ['allow', 'allowfullscreen', 'frameborder', 'scrolling', 'target', 'rel', 'style', 'class', 'align'],
+  ALLOWED_URI_REGEXP: /^(?:https?:\/\/(?:www\.)?(youtube\.com|youtube-nocookie\.com|player\.vimeo\.com|vimeo\.com))/i,
+})
+```
+
+### 🟡 Issue 11.3: Testimonial Card Fallback Bypasses Sanitization
+
+- **Severity:** Medium
+- **Issue:** In [testimonial-card.tsx#L61-L65](file:///c:/Users/habib/Downloads/admin-panel-plan-2/components/testimonial-card.tsx#L61-L65), when `sanitizeEmbedCode` throws an error, the fallback directly extracts and uses the `src` attribute via regex and renders it with `dangerouslySetInnerHTML` — bypassing the trusted domain validation.
+- **Impact:** If a malicious iframe URL is stored that causes `sanitizeEmbedCode` to throw, the fallback renders it without domain validation.
+- **Location:** [testimonial-card.tsx#L61-L65](file:///c:/Users/habib/Downloads/admin-panel-plan-2/components/testimonial-card.tsx#L61-L65)
+- **Fix:** The fallback should either re-throw or render an error message, never construct an iframe from unvalidated input:
+```tsx
+} catch (e) {
+  console.error('Failed to sanitize testimonial iframe:', e)
+  cleanHtml = `<div class="p-4 text-xs text-muted-foreground">Invalid embed code</div>`
+}
+```
+
+---
+
+## 12. HEADERS & INFRASTRUCTURE
+
+### 🟡 Issue 12.1: No Security Headers Configured
+
+- **Severity:** Medium
+- **Issue:** Neither `next.config.mjs` nor `netlify.toml` configure security headers. Missing headers include:
+  - `Content-Security-Policy` (CSP)
+  - `Strict-Transport-Security` (HSTS)
+  - `X-Frame-Options`
+  - `X-Content-Type-Options`
+  - `Referrer-Policy`
+  - `Permissions-Policy`
+- **Location:** [next.config.mjs](file:///c:/Users/habib/Downloads/admin-panel-plan-2/next.config.mjs), [netlify.toml](file:///c:/Users/habib/Downloads/admin-panel-plan-2/netlify.toml)
+- **Fix:** Add to `next.config.mjs`:
+```js
+const nextConfig = {
+  // ... existing config
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+        ],
+      },
+    ]
+  },
+}
+```
+
+### 🟡 Issue 12.2: `ignoreBuildErrors: true` Masks Type Errors
+
+- **Severity:** Low
+- **Issue:** `typescript: { ignoreBuildErrors: true }` in [next.config.mjs](file:///c:/Users/habib/Downloads/admin-panel-plan-2/next.config.mjs) means type errors in production builds are silently ignored, which could mask security-relevant bugs.
+- **Fix:** Remove before production deployment and fix all type errors.
+
+---
+
+## 13. DEPENDENCIES
+
+### ✅ Key Dependencies Assessment
+
+| Package | Version | Risk Assessment |
+|---------|---------|-----------------|
+| `next` | 16.2.6 | Current — ✅ |
+| `@supabase/ssr` | ^0.12.0 | Current — ✅ |
+| `@supabase/supabase-js` | ^2.110.1 | Current — ✅ |
+| `isomorphic-dompurify` | ^3.19.0 | Current — ✅ |
+| `react` | ^19 | Current — ✅ |
+
+### 🟡 Issue 13.1: `playwright` in Dev Dependencies
+
+- **Severity:** Low
+- **Issue:** Playwright is in `devDependencies` which is fine, but the `scratch/` directory contains test scripts that may have been run with elevated access.
+- **Fix:** Ensure `scratch/` directory is in `.gitignore` and not deployed.
+
+---
+
+## 14. LOGGING & MONITORING
+
+### 🟡 Issue 14.1: Error Messages May Expose Internal Details
+
+- **Severity:** Low
+- **Issue:** `console.error` calls throughout the store layer log Supabase error objects which may contain internal table names, column names, and query details.
+- **Location:** Throughout [store.ts](file:///c:/Users/habib/Downloads/admin-panel-plan-2/lib/store/store.ts)
+- **Fix:** In production, use a structured logger that strips sensitive details:
+```ts
+if (process.env.NODE_ENV === 'production') {
+  console.error('DB operation failed:', error.code, error.message)
+} else {
+  console.error('DB operation failed:', error)
+}
+```
+
+### 🟡 Issue 14.2: No Audit Logging for Admin Actions
+
+- **Severity:** Medium
+- **Issue:** Admin actions (delete records, change settings, upload files) have no audit trail. If an admin account is compromised, there's no way to determine what was modified.
+- **Fix:** Add an audit log table and log all admin mutations:
+```ts
+async function auditLog(action: string, userId: string, details: object) {
+  const serviceClient = getServiceRoleClient()
+  await serviceClient.from('audit_log').insert({
+    action, user_id: userId, details, created_at: new Date().toISOString()
+  })
+}
+```
+
+---
+
+## 15. BUSINESS LOGIC VULNERABILITIES
+
+### 🔴 Issue 15.1: Public Form Submissions Use Service Role Key
+
+- **Severity:** High
+- **Issue:** The public `submitApplication`, `submitContact`, `submitHireTalent`, and `submitDiscoveryCall` actions in [submit.ts](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/actions/submit.ts) call store functions that use `getServiceRoleClient()`. This means **public form submissions bypass all RLS** and write directly with admin privileges.
+- **Impact:** If there were RLS policies protecting the applications/submissions tables, they would be bypassed. More importantly, if a bug in the store function allowed data to be read or modified (not just inserted), the full DB would be accessible.
+- **Location:** [store.ts#L1570-L1605](file:///c:/Users/habib/Downloads/admin-panel-plan-2/lib/store/store.ts#L1570-L1605) (addApplication), [store.ts#L1721-L1736](file:///c:/Users/habib/Downloads/admin-panel-plan-2/lib/store/store.ts#L1721-L1736) (addContactSubmission)
+- **Fix:** Create a separate Supabase client with an anon key for public writes, and use RLS policies that allow `INSERT` on these tables for anonymous users but restrict `SELECT`/`UPDATE`/`DELETE`:
+```sql
+CREATE POLICY "Anyone can insert applications" ON programme_applications
+  FOR INSERT WITH CHECK (true);
+  
+CREATE POLICY "Only service role can read applications" ON programme_applications
+  FOR SELECT USING (auth.role() = 'service_role');
+```
+
+### 🔴 Issue 15.2: No Rate Limiting on Public Forms
+
+- **Severity:** High
+- **Issue:** All public server actions (`submitApplication`, `submitContact`, `submitHireTalent`, `submitDiscoveryCall`) have no rate limiting. An attacker can submit thousands of applications per second.
+- **Impact:** Database pollution, storage costs, potential DoS.
+- **Location:** [submit.ts](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/actions/submit.ts)
+- **Fix:** Implement rate limiting. Options:
+  1. **Netlify-level:** Use Netlify's rate limiting features
+  2. **Application-level:** Use an in-memory store or Redis:
+  ```ts
+  import { headers } from 'next/headers'
+  
+  const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
+  
+  function checkRateLimit(ip: string, limit: number = 5, windowMs: number = 60000) {
+    const now = Date.now()
+    const entry = rateLimitMap.get(ip)
+    if (!entry || now > entry.resetAt) {
+      rateLimitMap.set(ip, { count: 1, resetAt: now + windowMs })
+      return true
+    }
+    if (entry.count >= limit) return false
+    entry.count++
+    return true
+  }
+  ```
+  3. **Supabase-level:** Add a database function that checks submission frequency per email/IP.
+
+### 🟡 Issue 15.3: `seedDbAction` Can Wipe and Re-Seed Entire Database
+
+- **Severity:** Medium (Critical if Issue 2.1 is unpatched)
+- **Issue:** The `seedDbAction` function deletes all existing data and re-inserts seed data. This is exposed as a server action without authentication.
+- **Impact:** Complete data loss — all programmes, testimonials, posts, settings reset to defaults.
+- **Location:** [content.ts#L34-L37](file:///c:/Users/habib/Downloads/admin-panel-plan-2/app/admin/actions/content.ts#L34-L37)
+- **Fix:** Add auth check + confirmation mechanism. Consider removing this from production entirely.
+
+---
+
+## Production Readiness Score
+
+| Category | Score | Notes |
+|----------|-------|-------|
+| Authentication | 7/10 | Supabase Auth is solid, but session-only (no roles) |
+| Authorization | **1/10** | Server actions completely unprotected |
+| Input Validation | 2/10 | No backend validation on any form |
+| File Upload Security | 1/10 | No type/size validation, no auth |
+| XSS Prevention | 4/10 | React auto-escaping helps, but legal pages are vulnerable |
+| Security Headers | 2/10 | None configured |
+| Rate Limiting | 0/10 | None |
+| Secrets Management | 8/10 | Properly separated, `.gitignore` correct |
+| Database Security | 5/10 | ORM is safe, but RLS bypassed everywhere |
+| Logging & Monitoring | 2/10 | No audit trail |
+
+---
+
+## 🏆 Final Production Readiness Score: 3.2 / 10
+
+> [!CAUTION]
+> **This application is NOT safe for production deployment in its current state.** The combination of unauthenticated admin server actions + no file upload validation + no input sanitization creates a chain of vulnerabilities that would allow an attacker to completely compromise the site, inject malicious content for all visitors, and access/delete all user PII.
+
+---
+
+## Priority Fix Order
+
+1. **🚨 IMMEDIATE:** Add authentication checks to ALL admin server actions ([Issue 2.1](#-issue-21-admin-server-actions-have-no-authentication-checks))
+2. **🚨 IMMEDIATE:** Add file upload validation (type, size, MIME) ([Issue 6.1](#-issue-61-no-file-type-validation--arbitrary-file-upload))
+3. **🚨 IMMEDIATE:** Sanitize HTML on legal pages ([Issue 11.1](#-issue-111-privacy-policy--terms-pages-render-unsanitized-html))
+4. **🔴 URGENT:** Add backend input validation to public forms ([Issue 3.1](#-issue-31-no-backend-input-validation-on-public-form-submissions))
+5. **🔴 URGENT:** Add rate limiting to public forms ([Issue 15.2](#-issue-152-no-rate-limiting-on-public-forms))
+6. **🟡 SOON:** Add security headers ([Issue 12.1](#-issue-121-no-security-headers-configured))
+7. **🟡 SOON:** Fix testimonial card sanitization fallback ([Issue 11.3](#-issue-113-testimonial-card-fallback-bypasses-sanitization))
+8. **🟡 SOON:** Add audit logging ([Issue 14.2](#-issue-142-no-audit-logging-for-admin-actions))
+9. **🟢 PLANNED:** Add Zod schema validation ([Issue 7.1](#-issue-71-server-actions-lack-schema-validation))
+10. **🟢 PLANNED:** Clean up debug files and console.logs ([Issues 10.3, 10.4](#-issue-103-debug-files-in-repository-root))

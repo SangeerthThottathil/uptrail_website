@@ -1,0 +1,11 @@
+{"timestamp":"00:00:02.206","source":"Server","level":"WARN","message":"⚠ The \"middleware\" file convention is deprecated. Please use \"proxy\" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy"}
+{"timestamp":"00:00:02.608","source":"Server","level":"LOG","message":"- Experiments (use with caution):"}
+{"timestamp":"00:00:02.608","source":"Server","level":"LOG","message":"  · serverActions"}
+{"timestamp":"00:00:02.609","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:00:06.011","source":"Server","level":"WARN","message":"⚠ Blocked cross-origin request to Next.js dev resource /_next/webpack-hmr from \"127.0.0.1\".\nCross-origin access to Next.js dev resources is blocked by default for safety.\n\nTo allow this host in development, add it to \"allowedDevOrigins\" in next.config.js and restart the dev server:\n\n// next.config.js\nmodule.exports = {\n  allowedDevOrigins: ['127.0.0.1'],\n}\n\nRead more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins"}
+{"timestamp":"00:00:14.621","source":"Server","level":"LOG","message":"○ Compiling /admin/programmes/[track]/new ..."}
+{"timestamp":"00:00:17.589","source":"Server","level":"LOG","message":"RootLayout incoming x-pathname header: \"/admin/programmes/career/new\""}
+{"timestamp":"00:00:21.743","source":"Server","level":"LOG","message":"RootLayout incoming x-pathname header: \"/admin/programmes/career/new\""}
+{"timestamp":"00:00:57.953","source":"Server","level":"LOG","message":"RootLayout incoming x-pathname header: \"/admin/programmes/career/new\""}
+{"timestamp":"00:01:38.508","source":"Server","level":"LOG","message":"RootLayout incoming x-pathname header: \"/admin/programmes/career/new\""}
+{"timestamp":"00:01:45.454","source":"Server","level":"LOG","message":"RootLayout incoming x-pathname header: \"/admin/programmes/career/new\""}
