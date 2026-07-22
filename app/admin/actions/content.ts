@@ -42,9 +42,13 @@ function refreshAll() {
 /* ----------------------------- Seeding --------------------------------- */
 
 export async function seedDbAction() {
-  await requireAdmin()
-  await store.seedDatabase()
-  refreshAll()
+  try {
+    await requireAdmin()
+    await store.seedDatabase()
+    refreshAll()
+  } catch (err: any) {
+    console.error('Error seeding database:', err)
+  }
 }
 
 /* ----------------------------- Programmes ------------------------------ */

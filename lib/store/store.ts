@@ -144,97 +144,111 @@ export async function seedDatabase() {
   const serviceClient = getServiceRoleClient()
   const hasSeo = await checkProgrammesHasSeo()
 
-  console.log('Seeding programmes...')
-  for (const prog of seedProgrammes) {
-    await serviceClient.from('programmes').upsert(mapProgrammeToDb(prog, hasSeo))
-  }
+  try {
+    console.log('Seeding programmes...')
+    for (const prog of seedProgrammes) {
+      await serviceClient.from('programmes').upsert(mapProgrammeToDb(prog, hasSeo))
+    }
+  } catch (e) { console.warn('Seeding programmes error:', e) }
 
-  console.log('Seeding testimonials...')
-  await serviceClient.from('testimonials').delete().neq('id', 0)
-  for (let i = 0; i < seedTestimonials.length; i++) {
-    const t = seedTestimonials[i]
-    await serviceClient.from('testimonials').insert({
-      quote: t.quote,
-      name: t.name,
-      role: t.role,
-      programme: t.programme,
-      rating: t.rating,
-      order_index: i,
+  try {
+    console.log('Seeding testimonials...')
+    await serviceClient.from('testimonials').delete().neq('id', 0)
+    for (let i = 0; i < seedTestimonials.length; i++) {
+      const t = seedTestimonials[i]
+      await serviceClient.from('testimonials').insert({
+        quote: t.quote,
+        name: t.name,
+        role: t.role,
+        programme: t.programme,
+        rating: t.rating,
+        order_index: i,
+      })
+    }
+  } catch (e) { console.warn('Seeding testimonials error:', e) }
+
+  try {
+    console.log('Seeding video testimonials...')
+    await serviceClient.from('video_testimonials').delete().neq('id', 0)
+    for (let i = 0; i < seedVideoTestimonials.length; i++) {
+      const v = seedVideoTestimonials[i]
+      await serviceClient.from('video_testimonials').insert({
+        name: v.name,
+        role: v.role,
+        programme: v.programme,
+        quote: v.quote,
+        poster: v.poster,
+        src: v.src,
+        order_index: i,
+      })
+    }
+  } catch (e) { console.warn('Seeding video testimonials error:', e) }
+
+  try {
+    console.log('Seeding employers...')
+    await serviceClient.from('employers').delete().neq('id', 0)
+    for (let i = 0; i < seedEmployers.length; i++) {
+      const emp = seedEmployers[i]
+      await serviceClient.from('employers').insert({
+        name: emp.name,
+        slug: emp.slug,
+        order_index: i,
+      })
+    }
+  } catch (e) { console.warn('Seeding employers error:', e) }
+
+  try {
+    console.log('Seeding stats...')
+    await serviceClient.from('stats').delete().neq('id', 0)
+    for (let i = 0; i < seedStats.length; i++) {
+      const s = seedStats[i]
+      await serviceClient.from('stats').insert({
+        value: s.value,
+        label: s.label,
+        order_index: i,
+      })
+    }
+  } catch (e) { console.warn('Seeding stats error:', e) }
+
+  try {
+    console.log('Seeding posts...')
+    for (let i = 0; i < seedPosts.length; i++) {
+      const post = seedPosts[i]
+      await serviceClient.from('posts').upsert({
+        slug: post.slug,
+        title: post.title,
+        excerpt: post.excerpt,
+        category: post.category,
+        date: post.date,
+        reading_time: post.readingTime,
+        author: post.author,
+        image: post.image,
+        order_index: i,
+      })
+    }
+  } catch (e) { console.warn('Seeding posts error:', e) }
+
+  try {
+    console.log('Seeding settings...')
+    await serviceClient.from('site_settings').upsert({
+      key: 'default',
+      general: defaultSettings.general,
+      contact: defaultSettings.contact,
+      announcement: defaultSettings.announcement,
+      header: defaultSettings.header,
+      footer: defaultSettings.footer,
+      social: defaultSettings.social,
     })
-  }
-
-  console.log('Seeding video testimonials...')
-  await serviceClient.from('video_testimonials').delete().neq('id', 0)
-  for (let i = 0; i < seedVideoTestimonials.length; i++) {
-    const v = seedVideoTestimonials[i]
-    await serviceClient.from('video_testimonials').insert({
-      name: v.name,
-      role: v.role,
-      programme: v.programme,
-      quote: v.quote,
-      poster: v.poster,
-      src: v.src,
-      order_index: i,
-    })
-  }
-
-  console.log('Seeding employers...')
-  await serviceClient.from('employers').delete().neq('id', 0)
-  for (let i = 0; i < seedEmployers.length; i++) {
-    const emp = seedEmployers[i]
-    await serviceClient.from('employers').insert({
-      name: emp.name,
-      slug: emp.slug,
-      order_index: i,
-    })
-  }
-
-  console.log('Seeding stats...')
-  await serviceClient.from('stats').delete().neq('id', 0)
-  for (let i = 0; i < seedStats.length; i++) {
-    const s = seedStats[i]
-    await serviceClient.from('stats').insert({
-      value: s.value,
-      label: s.label,
-      order_index: i,
-    })
-  }
-
-  console.log('Seeding posts...')
-  for (let i = 0; i < seedPosts.length; i++) {
-    const post = seedPosts[i]
-    await serviceClient.from('posts').upsert({
-      slug: post.slug,
-      title: post.title,
-      excerpt: post.excerpt,
-      category: post.category,
-      date: post.date,
-      reading_time: post.readingTime,
-      author: post.author,
-      image: post.image,
-      order_index: i,
-    })
-  }
-
-  console.log('Seeding settings...')
-  await serviceClient.from('site_settings').upsert({
-    key: 'default',
-    general: defaultSettings.general,
-    contact: defaultSettings.contact,
-    announcement: defaultSettings.announcement,
-    header: defaultSettings.header,
-    footer: defaultSettings.footer,
-    social: defaultSettings.social,
-  })
+  } catch (e) { console.warn('Seeding settings error:', e) }
 
   console.log('Database seeded successfully!')
-  revalidateTag('programmes')
-  revalidateTag('testimonials')
-  revalidateTag('video_testimonials')
-  revalidateTag('employers')
-  revalidateTag('stats')
-  revalidateTag('posts')
-  revalidateTag('settings')
+  try { revalidateTag('programmes') } catch (e) {}
+  try { revalidateTag('testimonials') } catch (e) {}
+  try { revalidateTag('video_testimonials') } catch (e) {}
+  try { revalidateTag('employers') } catch (e) {}
+  try { revalidateTag('stats') } catch (e) {}
+  try { revalidateTag('posts') } catch (e) {}
+  try { revalidateTag('settings') } catch (e) {}
 }
 
 /* ----------------------------- Programmes ------------------------------ */
