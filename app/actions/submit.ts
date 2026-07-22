@@ -2,7 +2,6 @@
 
 import { revalidatePath } from 'next/cache'
 import { headers } from 'next/headers'
-import DOMPurify from 'isomorphic-dompurify'
 import * as store from '@/lib/store/store'
 import { getProgramme } from '@/lib/store/store'
 import type { ContactSource, Track } from '@/lib/store/types'
@@ -42,7 +41,9 @@ async function enforceRateLimit(limit: number = 15, windowMs: number = 60000) {
 
 function sanitizeText(input: string, maxLength: number = 1000): string {
   if (!input) return ''
-  const clean = DOMPurify.sanitize(input, { ALLOWED_TAGS: [] })
+  const clean = input
+    .replace(/<[^>]*>?/gm, '')
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
   return clean.slice(0, maxLength).trim()
 }
 

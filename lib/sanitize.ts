@@ -1,4 +1,4 @@
-import DOMPurify from 'isomorphic-dompurify'
+import sanitize from 'sanitize-html'
 
 /**
  * Sanitizes HTML content before rendering it on the public site,
@@ -8,20 +8,39 @@ import DOMPurify from 'isomorphic-dompurify'
 export function sanitizeHtml(html: string): string {
   if (!html) return ''
 
-  return DOMPurify.sanitize(html, {
-    ADD_TAGS: ['iframe', 'video', 'source'],
-    ADD_ATTR: [
-      'allow',
-      'allowfullscreen',
-      'frameborder',
-      'scrolling',
-      'target',
-      'rel',
-      'style',
-      'class',
-      'align',
-    ],
-    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.-]|$))/i,
+  return sanitize(html, {
+    allowedTags: sanitize.defaults.allowedTags.concat([
+      'h1',
+      'h2',
+      'img',
+      'iframe',
+      'video',
+      'source',
+      'section',
+      'article',
+      'figure',
+      'figcaption',
+    ]),
+    allowedAttributes: {
+      ...sanitize.defaults.allowedAttributes,
+      iframe: [
+        'src',
+        'width',
+        'height',
+        'allow',
+        'allowfullscreen',
+        'frameborder',
+        'scrolling',
+        'style',
+        'class',
+      ],
+      video: ['src', 'controls', 'autoplay', 'loop', 'muted', 'poster', 'width', 'height', 'style', 'class'],
+      source: ['src', 'type'],
+      img: ['src', 'alt', 'title', 'width', 'height', 'loading', 'style', 'class'],
+      a: ['href', 'name', 'target', 'rel', 'class'],
+      '*': ['style', 'class', 'id'],
+    },
+    allowedSchemes: ['http', 'https', 'mailto', 'tel'],
   })
 }
 
