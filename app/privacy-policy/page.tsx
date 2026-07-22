@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default async function PrivacyPolicyPage() {
   const settings = await getSettings()
   const rawContentHtml =
-    settings.general.privacy_policy_content ||
+    settings?.general?.privacy_policy_content ||
     '<p>Privacy policy content is not set yet. Please configure it in the admin settings.</p>'
   const contentHtml = sanitizeHtml(rawContentHtml)
 

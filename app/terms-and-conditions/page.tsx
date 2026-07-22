@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default async function TermsAndConditionsPage() {
   const settings = await getSettings()
   const rawContentHtml =
-    settings.general.terms_conditions_content ||
+    settings?.general?.terms_conditions_content ||
     '<p>Terms and conditions content is not set yet. Please configure it in the admin settings.</p>'
   const contentHtml = sanitizeHtml(rawContentHtml)
 

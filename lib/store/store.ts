@@ -10,6 +10,32 @@ import { defaultSettings } from './defaults'
 import { createServerComponentClient, getServiceRoleClient, getPublicServerClient } from '@/lib/supabase'
 import { unstable_cache, revalidateTag as nextRevalidateTag } from 'next/cache'
 const revalidateTag = nextRevalidateTag as unknown as (tag: string) => void
+
+function safeUnstableCache<T extends (...args: any[]) => Promise<any>>(
+  fn: T,
+  keyParts?: string[],
+  options?: { revalidate?: number | false; tags?: string[] }
+): T {
+  try {
+    const cachedFn = unstable_cache(fn, keyParts, options)
+    return (async (...args: Parameters<T>) => {
+      try {
+        return await cachedFn(...args)
+      } catch (err: any) {
+        if (
+          err?.message?.includes('incrementalCache') ||
+          err?.message?.includes('Invariant') ||
+          err?.message?.includes('unstable_cache')
+        ) {
+          return await fn(...args)
+        }
+        throw err
+      }
+    }) as T
+  } catch {
+    return fn
+  }
+}
 import { sanitizeEmbedCode } from '@/lib/utils'
 import type {
   Programme,
@@ -254,7 +280,7 @@ export async function seedDatabase() {
 /* ----------------------------- Programmes ------------------------------ */
 
 export function getProgrammes(track?: string): Promise<Programme[]> {
-  return unstable_cache(
+  return safeUnstableCache(
     async () => {
       try {
         const supabase = getPublicServerClient()
@@ -291,7 +317,7 @@ export function getProgrammes(track?: string): Promise<Programme[]> {
 }
 
 export function getProgramme(slug: string): Promise<Programme | undefined> {
-  return unstable_cache(
+  return safeUnstableCache(
     async () => {
       try {
         const supabase = getPublicServerClient()
@@ -334,7 +360,7 @@ export function getProgramme(slug: string): Promise<Programme | undefined> {
 }
 
 export function getFeaturedProgrammes(): Promise<Programme[]> {
-  return unstable_cache(
+  return safeUnstableCache(
     async () => {
       try {
         const supabase = getPublicServerClient()
@@ -473,7 +499,7 @@ export async function deleteProgramme(slug: string) {
 /* ---------------------------- Testimonials ----------------------------- */
 
 export function getTestimonials(): Promise<Testimonial[]> {
-  return unstable_cache(
+  return safeUnstableCache(
     async () => {
       try {
         const supabase = getPublicServerClient()
@@ -552,7 +578,7 @@ export function getTestimonials(): Promise<Testimonial[]> {
 }
 
 export function getFeaturedTestimonial(): Promise<Testimonial | undefined> {
-  return unstable_cache(
+  return safeUnstableCache(
     async () => {
       try {
         const supabase = getPublicServerClient()
@@ -705,7 +731,7 @@ export const seedSuccessStories: SuccessStory[] = [
 ]
 
 export function getSuccessStories(): Promise<SuccessStory[]> {
-  return unstable_cache(
+  return safeUnstableCache(
     async () => {
       try {
         const supabase = getPublicServerClient()
@@ -738,7 +764,7 @@ export function getSuccessStories(): Promise<SuccessStory[]> {
 }
 
 export function getFeaturedSuccessStory(): Promise<SuccessStory | undefined> {
-  return unstable_cache(
+  return safeUnstableCache(
     async () => {
       try {
         const supabase = getPublicServerClient()
@@ -816,7 +842,7 @@ export async function setSuccessStories(items: SuccessStory[]) {
 /* ------------------------- Video testimonials -------------------------- */
 
 export function getVideoTestimonials(): Promise<VideoTestimonial[]> {
-  return unstable_cache(
+  return safeUnstableCache(
     async () => {
       try {
         const supabase = getPublicServerClient()
@@ -913,7 +939,7 @@ export function getVideoTestimonials(): Promise<VideoTestimonial[]> {
 }
 
 export function getHomeVideoTestimonials(): Promise<VideoTestimonial[]> {
-  return unstable_cache(
+  return safeUnstableCache(
     async () => {
       try {
         const supabase = getPublicServerClient()
@@ -1090,7 +1116,7 @@ export async function getProgrammeVideoTestimonials(programmeSlug: string): Prom
 /* ------------------------------ Employers ------------------------------ */
 
 export function getEmployers(): Promise<Employer[]> {
-  return unstable_cache(
+  return safeUnstableCache(
     async () => {
       try {
         const supabase = getPublicServerClient()
@@ -1136,7 +1162,7 @@ export async function setEmployers(items: Employer[]) {
 /* -------------------------------- Stats -------------------------------- */
 
 export function getStats(): Promise<Stat[]> {
-  return unstable_cache(
+  return safeUnstableCache(
     async () => {
       try {
         const supabase = getPublicServerClient()
@@ -1182,7 +1208,7 @@ export async function setStats(items: Stat[]) {
 /* -------------------------------- Posts -------------------------------- */
 
 export function getPosts(): Promise<Post[]> {
-  return unstable_cache(
+  return safeUnstableCache(
     async () => {
       try {
         const supabase = getPublicServerClient()
@@ -1293,7 +1319,7 @@ export async function setPosts(items: Post[]) {
 }
 
 export function getPost(slug: string): Promise<Post | undefined> {
-  return unstable_cache(
+  return safeUnstableCache(
     async () => {
       try {
         const supabase = getPublicServerClient()
@@ -1376,7 +1402,7 @@ export async function deletePost(slug: string) {
 /* ------------------------------ Settings ------------------------------- */
 
 export function getSettings(): Promise<SiteSettings> {
-  return unstable_cache(
+  return safeUnstableCache(
     async () => {
       try {
         const supabase = getPublicServerClient()
